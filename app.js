@@ -58,22 +58,31 @@ app.post('/books', (req, res) => {
     }
   });
 
-
   app.put('/books/:bookId', async (req, res) => {
     try {
       const bookId = req.params.bookId;
       const updatedBook = await Book.findByIdAndUpdate(bookId, req.body, { new: true });
   
       if (!updatedBook) {
-        return res.status(404).json({ message: `Book was not found for this ID:- ${bookId}` });
-      }else{
-        return res.status(200).json(updatedBook);
+        return res.status(404).json({ error: `Book was not found for this ID: ${bookId}` });
       }
-
+  
+      return res.status(200).json(updatedBook);
     } catch (err) {
-      res.status(400).json(err);
+      console.error(err); 
+  
+      if (err.name === 'CastError') {
+        return res.status(400).json({ error: 'Invalid book ID format' });
+      }
+  
+      if (err.name === 'ValidationError') {
+        return res.status(400).json({ error: err.message });
+      }
+  
+      return res.status(500).json({ error: 'An unexpected error occurred' });
     }
   });
+  
   
 
   app.delete('/books/:bookId', async (req, res) => {
